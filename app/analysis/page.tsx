@@ -13,8 +13,8 @@ export default function Analysis() {
   };
 
   return (
-    <div>
-      <Button variant="outline" size="sm" onClick={handleCrear}>
+    <div className='p-4'>
+      <Button variant="outline" size="sm" onClick={handleCrear} className='mb-2'>
         <IconPlus /> Agregar
       </Button>
       <TablaEstudiantes />

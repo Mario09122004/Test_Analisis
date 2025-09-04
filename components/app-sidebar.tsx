@@ -42,11 +42,6 @@ const data = {
       icon: IconUserFilled,
     },
     {
-      title: "Analysis",
-      url: "/analysis",
-      icon: IconReport,
-    },
-    {
       title: "Orders",
       url: "/orders",
       icon: IconFileBarcode,
@@ -55,6 +50,11 @@ const data = {
       title: "Samples",
       url: "/samples",
       icon: IconTestPipe2Filled,
+    },
+    {
+      title: "Analysis",
+      url: "/analysis",
+      icon: IconReport,
     },
   ],
 }
