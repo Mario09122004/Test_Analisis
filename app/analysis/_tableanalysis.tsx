@@ -15,6 +15,14 @@ const variants: SpinnerProps['variant'][] = [
   'bars',
   'infinite',
 ];
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 export function TablaEstudiantes() {
   const analisis = useQuery(api.analisis.obtenerAnalisis);
@@ -31,34 +39,27 @@ export function TablaEstudiantes() {
   }
 
   return (
-    <Table>
-      <TableCaption>Lista de Analisis</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[100px]">Dias de espera</TableHead>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Costos</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      
         {analisis.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={3} className="text-center">
-              No hay analisis
-            </TableCell>
-          </TableRow>
+              <p>No hay analisis</p>
         ) : (
           analisis.map((analisi) => (
-            <TableRow key={analisi._id}>
-              <TableCell className="font-medium">
-                  {analisi.disDeEspera}
-                </TableCell>
-                <TableCell>{analisi.nombre}</TableCell>
-                <TableCell>{analisi.costo}</TableCell>
-            </TableRow>
+            <Card className="w-full max-w-sm">
+              <CardHeader>
+                <CardTitle>{analisi.nombre}</CardTitle>
+                <CardDescription>{analisi.descripcion}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>${analisi.costo}</p>
+              </CardContent>
+              <CardFooter>
+                <p>Card Footer</p>
+              </CardFooter>
+            </Card>
+
           ))
         )}
-      </TableBody>
-    </Table>
+    </>
   );
 }
