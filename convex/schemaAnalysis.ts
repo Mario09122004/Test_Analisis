@@ -8,5 +8,10 @@ export default defineSchema({
         diasDeEspera: v.number(),
         costo: v.number(),
         datos: v.array(v.string()),
-    }),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+    .index("by_nombre", ["nombre"])
+    .index("by_costo", ["costo"])
+    .index("by_diasDeEspera", ["diasDeEspera"]),
 });

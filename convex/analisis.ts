@@ -28,12 +28,15 @@ export const crearAnalisis = mutation({
   },
   handler: async (ctx, args) => {
     const { nombre, descripcion, diasDeEspera, costo, datos } = args;
-    return await ctx.db.insert("estudiantes", {
+    const now = Date.now();
+    return await ctx.db.insert("analisis", {
       nombre, 
       descripcion, 
       diasDeEspera, 
       costo, 
-      datos
+      datos,
+      createdAt: now,
+      updatedAt: now,
     });
   },
 });
@@ -55,7 +58,8 @@ export const actualizarAnalisis = mutation({
       descripcion, 
       diasDeEspera, 
       costo, 
-      datos
+      datos,
+      updatedAt: Date.now(),
     });
   },
 });

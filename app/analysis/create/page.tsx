@@ -45,8 +45,8 @@ export default function CrearEstudiantePage() {
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
-        diasDeEspera: 0,
-        costo: 0,
+        diasDeEspera: "",
+        costo: "",
         datos: [],
     });
 
@@ -61,12 +61,29 @@ export default function CrearEstudiantePage() {
         e.preventDefault();
         setIsSubmitting(true);
 
+        // Filtrar campos vacíos del array de datos
+        const datosFiltrados = fields.filter(field => field.trim() !== "");
+
+        // Validar que los campos numéricos no estén vacíos
+        if (!formData.diasDeEspera || !formData.costo) {
+            alert("Por favor completa todos los campos numéricos");
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validar que al menos un parámetro esté presente
+        if (datosFiltrados.length === 0) {
+            alert("Por favor agrega al menos un parámetro al análisis");
+            setIsSubmitting(false);
+            return;
+        }
+
         const newFormData = {
             nombre: formData.nombre,
             descripcion: formData.descripcion,
-            diasDeEspera: formData.diasDeEspera,
+            diasDeEspera: parseInt(formData.diasDeEspera),
             costo: parseFloat(formData.costo),
-            datos: formData.datos
+            datos: datosFiltrados
         }
 
         try {
@@ -124,7 +141,7 @@ export default function CrearEstudiantePage() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="correo">Dias de espera</Label>
+                            <Label htmlFor="diasDeEspera">Días de espera</Label>
                             <Input
                                 id="diasDeEspera"
                                 name="diasDeEspera"
@@ -132,28 +149,31 @@ export default function CrearEstudiantePage() {
                                 value={formData.diasDeEspera}
                                 onChange={handleChange}
                                 placeholder="Ej: 5"
-                                step={1}
+                                min="1"
+                                step="1"
                                 inputMode="numeric"
                                 required
                             />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="numMatricula">Costo del analisis</Label>
+                            <Label htmlFor="costo">Costo del análisis</Label>
                             <Input
                                 id="costo"
                                 name="costo"
                                 type="number"
                                 value={formData.costo}
                                 onChange={handleChange}
-                                placeholder="Ej: 200"
-                                inputMode="numeric"
+                                placeholder="Ej: 200.00"
+                                min="0"
+                                step="0.01"
+                                inputMode="decimal"
                                 required
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="numMatricula">Parametros del analisis</Label>
+                                                <div className="grid gap-2">
+                            <Label htmlFor="parametros">Parámetros del análisis</Label>
                             <div className="flex flex-col sm:flex-row justify-between gap-4 mt-4">
                                 <Button
                                     type="button"
@@ -161,30 +181,32 @@ export default function CrearEstudiantePage() {
                                     variant="outline" 
                                     size="sm"
                                     >
-                                    <IconPlus />
-                                    Agregar campo
+                                    <IconPlus className="h-4 w-4" />
+                                    Agregar parámetro
                                 </Button>
                                 <Button
                                     type="button"
                                     onClick={removeLastField}
                                     variant="outline" 
                                     size="sm"
+                                    disabled={fields.length <= 1}
                                     >
-                                    <IconMinus />
+                                    <IconMinus className="h-4 w-4" />
                                     Eliminar último
                                 </Button>
                             </div>
-                            {fields.map((value, index) => (
-                                <input
-                                key={index}
-                                type="text"
-                                value={value}
-                                onChange={(e) => handleChangeArray(index, e.target.value)}
-                                placeholder={`Campo ${index + 1}`}
-                                className="border p-1"
-                                required
-                                />
-                            ))}
+                            <div className="space-y-2 mt-4">
+                                {fields.map((value, index) => (
+                                    <Input
+                                    key={index}
+                                    type="text"
+                                    value={value}
+                                    onChange={(e) => handleChangeArray(index, e.target.value)}
+                                    placeholder={`Parámetro ${index + 1} (ej: Glucosa, Colesterol, etc.)`}
+                                    className="w-full"
+                                    />
+                                ))}
+                            </div>
                         </div>
 
                     </CardContent>
