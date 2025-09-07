@@ -49,11 +49,25 @@ import {
 import { toast } from "sonner"
 import { date } from "zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationLink,
+  PaginationNext
+} from "@/components/ui/pagination";
 
 export function TablaEstudiantes() {
   const analisis = useQuery(api.analisis.obtenerAnalisis);
   const eliminarAnalisis = useMutation(api.analisis.eliminarAnalisis);
   const router = useRouter();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const handleVerAnalisi = (id: string) => {
     router.push(`/analysis/${id}`);
@@ -64,49 +78,73 @@ export function TablaEstudiantes() {
   };
   
   const handleEliminar = async (id: string) => {
-        try {
-            await eliminarAnalisis({ id });
-            toast("Análisis eliminado.", {
-              description: new Date().toLocaleString(),
-            });
-        } catch (error) {
-            console.error("Error al eliminar estudiante:", error);
-        } finally {
+    try {
+      await eliminarAnalisis({ id });
+      toast("Análisis eliminado.", {
+        description: new Date().toLocaleString(),
+      });
+    } catch (error) {
+      console.error("Error al eliminar estudiante:", error);
+    }
+  };
 
-        }
-    };
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
 
   if (analisis === undefined) {
     return (
-        <div
+      <div
         className="flex flex-col items-center justify-center gap-4"
         key={"ellipsis"}
-        >
+      >
         <Spinner key={"ellipsis"} variant="ellipsis" />
-        </div>
+      </div>
     );
   }
 
+  const filteredAnalisis = analisis.filter(item =>
+    item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredAnalisis.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredAnalisis.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
   return (
-    <div className="flex flex-wrap">
-        {analisis.length === 0 ? (
-              <p>No hay analisis</p>
+    <div className="flex flex-col w-full">
+      <div className="mb-4">
+        <Input
+          type="text"
+          placeholder="Buscar por nombre..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="w-full md:w-1/3"
+        />
+      </div>
+      
+      <div className="flex flex-wrap items-stretch">
+        {currentItems.length === 0 ? (
+          <p>No se encontraron resultados.</p>
         ) : (
-          analisis.map((analisi) => (
-            <Card className="max-w-100 min-w-60 w-full mb-4 mr-4" key={analisi._id}>
+          currentItems.map((analisi) => (
+            <Card className="flex flex-col flex-grow flex-shrink basis-0 w-full mb-4 mr-4" key={analisi._id}>
               <div className="space-y-1">
                 <CardHeader>
                   <CardTitle className="text-2xl font-medium">{analisi.nombre}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p>${analisi.costo}</p>
-                  <CardDescription>{analisi.descripcion}</CardDescription>
+                  <CardDescription className="line-clamp-3">{analisi.descripcion}</CardDescription>
                 </CardContent>
               </div>
               <Separator className="h-0.5" />
               <CardFooter className="justify-center">
                 <div className="flex h-5 items-center space-x-4 text-sm">
-
                   <AlertDialog>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -120,7 +158,6 @@ export function TablaEstudiantes() {
                         <p>Eliminar análisis</p>
                       </TooltipContent>
                     </Tooltip>
-
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
@@ -136,9 +173,7 @@ export function TablaEstudiantes() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-
                   <Separator orientation="vertical" />
-
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="icon" className="size-8" onClick={() => handleActualizarAnalisi(analisi._id)}>
@@ -149,9 +184,7 @@ export function TablaEstudiantes() {
                       <p>Editar análisis</p>
                     </TooltipContent>
                   </Tooltip>
-
                   <Separator orientation="vertical" />
-
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="icon" className="size-8" onClick={() => handleVerAnalisi(analisi._id)}>
@@ -162,14 +195,48 @@ export function TablaEstudiantes() {
                       <p>Detalles del análisis</p>
                     </TooltipContent>
                   </Tooltip>
-
                 </div>
               </CardFooter>
-
             </Card>
           ))
         )}
-        
+      </div>
+
+      <div className="flex justify-center mt-8">
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={() => paginate(currentPage - 1)}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink
+                    href="#"
+                    onClick={() => paginate(index + 1)}
+                    isActive={currentPage === index + 1}
+                  >
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={() => paginate(currentPage + 1)}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+      </div>
     </div>
   );
 }
