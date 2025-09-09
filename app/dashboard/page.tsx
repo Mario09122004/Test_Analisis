@@ -30,7 +30,6 @@ export default function Example() {
 
   // Use `isSignedIn` to check if the user is signed in
   if (!isSignedIn) {
-    // You could also add a redirect to the sign-in page here
     return <div>Sign in to view this page</div>
   }
 

@@ -1,3 +1,4 @@
+import { query } from './_generated/server';
 import { v } from 'convex/values';
 import { internalMutation } from './_generated/server';
 
@@ -51,3 +52,9 @@ export const deleteFromClerk = internalMutation({
     }
   },
 });
+
+export const consultusers = query({
+  handler: async (ctx) => {
+      return await ctx.db.query("user").collect();
+  },
+})

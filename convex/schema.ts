@@ -23,5 +23,6 @@ export default defineSchema({
         updatedAt: v.number(),
     })
     .index("by_clerk_id", ["idClerk"])
-    .index("by_correo", ["correo"])
+    .index("by_correo", ["correo"]),
+
 });

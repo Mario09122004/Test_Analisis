@@ -123,7 +123,7 @@ export function TablaEstudiantes() {
           placeholder="Buscar por nombre..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="w-full md:w-1/3"
+          className="w-1/2 "
         />
       </div>
       
@@ -132,7 +132,7 @@ export function TablaEstudiantes() {
           <p>No se encontraron resultados.</p>
         ) : (
           currentItems.map((analisi) => (
-            <Card className="flex flex-col flex-grow flex-shrink basis-0 w-full mb-4 mr-4" key={analisi._id}>
+            <Card className="flex flex-col flex-grow flex-shrink basis-0 w-full mb-4 mr-2" key={analisi._id}>
               <div className="space-y-1">
                 <CardHeader>
                   <CardTitle className="text-2xl font-medium">{analisi.nombre}</CardTitle>

@@ -4,12 +4,20 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
 import { useUser } from "@clerk/nextjs";
+import { use } from "react";
+
+import { ModeToggle } from '@/components/theme-button'
 
 export function SiteHeader() {
   const { user, isLoaded } = useUser();
 
   if (!isLoaded) {
     return <p>Cargando...</p>;
+  }
+
+  let username = ""
+  if(user){
+    username = user.fullName
   }
 
   return (
@@ -20,7 +28,10 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">{user.fullName}</h1>
+        <h1 className="text-base font-medium">{username}</h1>
+      </div>
+      <div className="pr-2">
+        <ModeToggle/>
       </div>
     </header>
   )
