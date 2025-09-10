@@ -7,40 +7,22 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { IconPlus, IconMinus } from "@tabler/icons-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-// Definición de tipos para los ítems de la orden y el formulario
 interface OrderItem {
     analisisId: Id<"analisis"> | null;
     nombre: string;
@@ -50,15 +32,51 @@ interface OrderItem {
 }
 
 interface FormState {
-    userId: Id<"users"> | null;
+    userId: Id<"user"> | null;
     statusPago: "pendiente" | "pagado" | "cancelado" | "reembolsado";
     metodoPago: "efectivo" | "tarjeta" | "transferencia" | "paypal";
     order_item: OrderItem[];
     totalPago: number;
     montoPagado: number | "";
     notas: string;
-    descuento: number | ""; // Este campo ahora guardará el PORCENTAJE
+    descuento: number | "";
 }
+
+const generarTicketPDF = (ordenData: any, nombreCliente: string, ordenId: Id<"orders">) => {
+    const doc = new jsPDF();
+    const subtotal = ordenData.order_item.reduce((sum: number, item: any) => sum + item.subtotal, 0);
+
+    doc.setFontSize(20);
+    doc.text("Ticket de Compra", 105, 20, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.text(`Orden ID: ${ordenId}`, 14, 35);
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, 14, 42);
+    doc.text(`Cliente: ${nombreCliente}`, 14, 49);
+    doc.text(`Método de Pago: ${ordenData.metodoPago.charAt(0).toUpperCase() + ordenData.metodoPago.slice(1)}`, 14, 56);
+    
+    autoTable(doc, {
+        startY: 65,
+        head: [['Análisis', 'Cantidad', 'Precio Unitario', 'Subtotal']],
+        body: ordenData.order_item.map((item: any) => [
+            item.nombre,
+            item.cantidad,
+            `$${item.precioUnitario.toFixed(2)}`,
+            `$${item.subtotal.toFixed(2)}`
+        ]),
+        headStyles: { fillColor: [38, 38, 38] },
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY;
+    doc.setFontSize(12);
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 14, finalY + 10);
+    doc.text(`Descuento: -$${ordenData.descuento.toFixed(2)}`, 14, finalY + 17);
+    doc.setFont("bold");
+    doc.text(`Total Pagado: $${ordenData.totalPago.toFixed(2)}`, 14, finalY + 24);
+
+    doc.save(`ticket-orden-${ordenId}.pdf`);
+};
+
 
 export default function CrearOrdenPage() {
     const router = useRouter();
@@ -86,16 +104,11 @@ export default function CrearOrdenPage() {
         descuento: "",
     });
 
-    // Lógica de cálculo actualizada para porcentaje
     useEffect(() => {
         const subtotalGeneral = formData.order_item.reduce((sum, item) => sum + item.subtotal, 0);
         const descuentoPorcentaje = Number(formData.descuento) || 0;
-        
-        // Se calcula el monto a descontar
         const montoDescontado = subtotalGeneral * (descuentoPorcentaje / 100);
-        
         const totalFinal = subtotalGeneral - montoDescontado;
-        
         setFormData((prev) => ({ ...prev, totalPago: totalFinal >= 0 ? totalFinal : 0 }));
     }, [formData.order_item, formData.descuento]);
     
@@ -181,13 +194,12 @@ export default function CrearOrdenPage() {
             return;
         }
 
-        // Se calcula el MONTO del descuento para enviarlo al backend
         const subtotalGeneral = order_item.reduce((sum, item) => sum + item.subtotal, 0);
         const descuentoPorcentaje = Number(descuento) || 0;
         const montoDescuentoFinal = subtotalGeneral * (descuentoPorcentaje / 100);
 
         const newOrder = {
-            userId: userId as Id<"users">,
+            userId: userId as Id<"user">,
             statusPago: formData.statusPago,
             metodoPago: formData.metodoPago,
             order_item: order_item.map(item => ({
@@ -200,12 +212,14 @@ export default function CrearOrdenPage() {
             totalPago: totalPago,
             montoPagado: Number(montoPagado),
             notas: formData.notas,
-            descuento: montoDescuentoFinal, // Se envía el monto calculado, no el porcentaje
+            descuento: montoDescuentoFinal,
         }
 
         try {
-            await crearOrden(newOrder);
+            const nuevaOrdenId = await crearOrden(newOrder);
+            generarTicketPDF(newOrder, selectedUserName, nuevaOrdenId);
             router.push("/orders");
+
         } catch (error) {
             console.error("Error al crear la orden:", error);
             setErrorMessage("Error al crear la orden. Por favor, intenta de nuevo.");
@@ -239,7 +253,6 @@ export default function CrearOrdenPage() {
         );
     }
     
-    // Variable para mostrar el monto descontado en la UI
     const subtotal = formData.order_item.reduce((sum, item) => sum + item.subtotal, 0);
     const montoDescontadoUI = subtotal * ((Number(formData.descuento) || 0) / 100);
 
@@ -260,7 +273,7 @@ export default function CrearOrdenPage() {
                         <CardTitle className="font-semibold text-center">Información de la Orden</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 gap-6">
-                        
+                        {/* ... Código sin cambios ... */}
                         <div className="grid gap-2">
                             <Label htmlFor="userId">Cliente</Label>
                             <Popover open={openUserPopover} onOpenChange={setOpenUserPopover}>
@@ -278,7 +291,7 @@ export default function CrearOrdenPage() {
                                             <CommandGroup>
                                                 {users.map((user) => (
                                                     <CommandItem key={user._id} value={`${user.nombre} (${user.correo})`} onSelect={() => {
-                                                        setFormData((prev) => ({ ...prev, userId: user._id }));
+                                                        setFormData((prev) => ({ ...prev, userId: user._id as Id<"user"> }));
                                                         setSelectedUserName(`${user.nombre} (${user.correo})`);
                                                         setOpenUserPopover(false);
                                                     }}>
@@ -386,34 +399,25 @@ export default function CrearOrdenPage() {
                                 <Label>Subtotal</Label>
                                 <Input type="text" value={`$${subtotal.toFixed(2)}`} readOnly className="text-center" />
                             </div>
-                            <div className="grid gap-2">
+                            <div className="relative grid gap-2">
                                 <Label htmlFor="descuento">Descuento (%)</Label>
                                 <Input
-                                    id="descuento"
-                                    name="descuento"
-                                    type="number"
-                                    value={formData.descuento}
-                                    onChange={handleChange}
-                                    placeholder="Ej: 10"
-                                    min="0"
-                                    max="100"
-                                    step="1"
-                                    inputMode="numeric"
+                                    id="descuento" name="descuento" type="number"
+                                    value={formData.descuento} onChange={handleChange}
+                                    placeholder="Ej: 10" min="0" max="100" step="1" inputMode="numeric"
                                 />
-                                {montoDescontadoUI > 0 && (
-                                    <p className="text-xs text-muted-foreground text-center">
-                                        Equivale a: -${montoDescontadoUI.toFixed(2)}
-                                    </p>
-                                )}
+                                <p className={cn(
+                                    "text-xs text-muted-foreground text-center pt-1",
+                                    { "invisible": montoDescontadoUI <= 0 }
+                                )}>
+                                    Equivale a: -${montoDescontadoUI.toFixed(2)}
+                                </p>
                             </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="totalPago">Total a Pagar</Label>
                                 <Input 
-                                    id="totalPago"
-                                    type="text" 
-                                    value={`$${formData.totalPago.toFixed(2)}`} 
-                                    readOnly 
-                                    className="font-bold text-lg text-center bg-secondary" 
+                                    id="totalPago" type="text" value={`$${formData.totalPago.toFixed(2)}`} 
+                                    readOnly className="font-bold text-lg text-center bg-secondary" 
                                 />
                             </div>
                         </div>
@@ -438,7 +442,7 @@ export default function CrearOrdenPage() {
                             Cancelar
                         </Button>
                         <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                            {isSubmitting ? "Creando..." : "Crear Orden"}
+                            {isSubmitting ? "Creando..." : "Crear Orden y Ticket"}
                         </Button>
                     </CardFooter>
                 </form>
@@ -446,5 +450,3 @@ export default function CrearOrdenPage() {
         </div>
     );
 }
-
-// --- FIN DEL ARCHIVO COMPLETO ---

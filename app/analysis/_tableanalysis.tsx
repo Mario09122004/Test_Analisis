@@ -149,7 +149,7 @@ export function TablaEstudiantes() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="size-8">
+                          <Button variant="destructive" size="icon" className="size-8">
                             <IconTrash />
                           </Button>
                         </AlertDialogTrigger>

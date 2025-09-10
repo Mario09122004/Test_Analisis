@@ -16,6 +16,45 @@ export const obtenerOrdenPorId = query({
     },
 });
 
+//Consultar con los datos del usuario
+export const obtenerOrdenesConUsuario = query({
+  handler: async (ctx) => {
+    const ordenes = await ctx.db.query("orders").order("desc").collect();
+
+    const ordenesConUsuario = await Promise.all(
+      ordenes.map(async (orden) => {
+        const usuario = await ctx.db.get(orden.userId);
+        return {
+          ...orden,
+          nombreUsuario: usuario?.nombre ?? "Usuario no encontrado",
+          correoUsuario: usuario?.correo ?? "N/A",
+        };
+      })
+    );
+
+    return ordenesConUsuario;
+  },
+});
+
+export const obtenerOrdenPorIdConUsuario = query({
+  args: { id: v.id("orders") },
+  handler: async (ctx, args) => {
+    const orden = await ctx.db.get(args.id);
+
+    if (!orden) {
+      return null;
+    }
+
+    const usuario = await ctx.db.get(orden.userId);
+
+    return {
+      ...orden,
+      nombreUsuario: usuario?.nombre ?? "Usuario no encontrado",
+      correoUsuario: usuario?.correo ?? "N/A",
+    };
+  },
+});
+
 // Crear una nueva orden
 export const crearOrden = mutation({
     args: {

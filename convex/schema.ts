@@ -59,5 +59,25 @@ export default defineSchema({
         notas: v.optional(v.string()),
         descuento: v.number(),
         updatedAt: v.number(),
-    }),
+    })
+    .index("by_UserId", ["userId"]),
+
+    samples: defineTable({ // Poner un boton en las ordenes en la cual se uestre una pestaña con las muestras de la orden
+        orderId: v.id("orders"),
+        analisisId: v.id("analisis"),
+        estado: v.union(
+            v.literal("sin tomar"),
+            v.literal("procesando"),
+            v.literal("finalizada")
+        ),
+        resultados: v.optional(
+            v.record(
+                v.string(),
+                v.union(v.string(), v.number(), v.boolean(), v.null())
+            )
+        ),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+    .index("by_Order",["orderId"])
 });

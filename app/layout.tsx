@@ -33,16 +33,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+        <ClerkProvider>
         <ConvexClientProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <body>
+          <body>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
               <AuthSync/>
 
               <SignedOut>
@@ -56,10 +56,10 @@ export default function RootLayout({
                   {children}
                 </DashboardLayout>
               </SignedIn>
-            </body>
-          </ThemeProvider>
+            </ThemeProvider>
+          </body>
         </ConvexClientProvider>
+        </ClerkProvider>
       </html>
-    </ClerkProvider>
   )
 }
