@@ -16,8 +16,8 @@ import {
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function DetalleEstudiantePage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function DetalleAnalisisPage({ params }: { params: { id: string } }) {
+    const { id } = params;
     const idAnalisis = id as Id<"analisis">;
     const router = useRouter();
     const analisi = useQuery(api.analisis.obtenerAnalisisPorId, { id: idAnalisis });
@@ -58,9 +58,9 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                     <Button variant="outline" size="icon" onClick={() => router.back()}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
-                    <h1 className="text-3xl font-bold">Analisi no encontrado</h1>
+                    <h1 className="text-3xl font-bold">Análisis no encontrado</h1>
                 </div>
-                <p>No se pudo encontrar el analisi con el ID proporcionado.</p>
+                <p>No se pudo encontrar el análisis con el ID proporcionado.</p>
             </div>
         );
     }
@@ -71,7 +71,7 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                 <Button variant="outline" size="icon" onClick={() => router.back()}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h1 className="text-3xl font-bold">Detalle del Analisis</h1>
+                <h1 className="text-3xl font-bold">Detalle del Análisis</h1>
             </div>
 
             <Card className="max-w-2xl mx-auto">
@@ -89,7 +89,7 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                     </div>
 
                     <div>
-                        <h3 className="font-medium text-sm text-muted-foreground mb-1">Dias de espera</h3>
+                        <h3 className="font-medium text-sm text-muted-foreground mb-1">Días de espera</h3>
                         <div className="p-2 bg-muted rounded-md">{analisi.diasDeEspera}</div>
                     </div>
 
@@ -99,17 +99,27 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                     </div>
 
                     <div>
-                        <h3 className="font-medium text-sm text-muted-foreground mb-1">Parametros de analisis</h3>
+                        <h3 className="font-medium text-sm text-muted-foreground mb-1">Parámetros del análisis</h3>
                         {analisi.datos.length === 0 ? (
-                            <p>No hay analisis</p>
+                            <p>No hay parámetros definidos.</p>
                         ) : (
-                        analisi.datos.map((analisiDatos) => (
-                            <div className="p-2 bg-muted rounded-md mt-2" key={analisiDatos}>{analisiDatos}</div>
-                        )))}
+                            analisi.datos.map((dato, index) => (
+                                <div className="p-4 bg-muted rounded-md mt-2 space-y-1" key={index}>
+                                    <p>
+                                        <span className="font-semibold">Nombre:</span> {dato.nombre}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">Medición:</span> {dato.medicion}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">Estándar:</span> {dato.estandar}
+                                    </p>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </CardContent>
             </Card>
-
         </div>
     );
 }

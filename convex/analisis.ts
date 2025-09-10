@@ -1,14 +1,14 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-//Consult all analysis
+// Consultar todos los análisis
 export const obtenerAnalisis = query({
   handler: async (ctx) => {
     return await ctx.db.query("analisis").collect();
   },
 });
 
-//Consult a analysis with id
+// Consultar un análisis por su ID
 export const obtenerAnalisisPorId = query({
   args: { id: v.id("analisis") },
   handler: async (ctx, args) => {
@@ -17,14 +17,20 @@ export const obtenerAnalisisPorId = query({
 });
 
 
-// create a new Analysis
+// Crear un nuevo análisis
 export const crearAnalisis = mutation({
   args: {
     nombre: v.string(),
     descripcion: v.string(),
     diasDeEspera: v.number(),
     costo: v.number(),
-    datos: v.array(v.string()),
+    datos: v.array(
+      v.object({
+        nombre: v.string(),
+        medicion: v.string(),
+        estandar: v.string(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const { nombre, descripcion, diasDeEspera, costo, datos } = args;
@@ -41,7 +47,7 @@ export const crearAnalisis = mutation({
   },
 });
 
-//update Analysis
+// Actualizar un análisis
 export const actualizarAnalisis = mutation({
   args: {
     id: v.id("analisis"),
@@ -49,7 +55,13 @@ export const actualizarAnalisis = mutation({
     descripcion: v.string(),
     diasDeEspera: v.number(),
     costo: v.number(),
-    datos: v.array(v.string()),
+    datos: v.array(
+      v.object({
+        nombre: v.string(),
+        medicion: v.string(),
+        estandar: v.string(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const { id, nombre, descripcion, diasDeEspera, costo, datos } = args;
@@ -64,7 +76,7 @@ export const actualizarAnalisis = mutation({
   },
 });
 
-//Delete Analysis
+// Eliminar un análisis
 export const eliminarAnalisis = mutation({
   args: {
     id: v.id("analisis"),

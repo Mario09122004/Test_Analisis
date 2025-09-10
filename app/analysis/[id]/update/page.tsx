@@ -18,59 +18,64 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IconMinus, IconPlus } from "@tabler/icons-react";
-import { actualizarAnalisis } from "@/convex/analisis";
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export default function DetalleEstudiantePage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+interface Dato {
+    nombre: string;
+    medicion: string;
+    estandar: string;
+}
+
+export default function DetalleAnalisisPage({ params }: { params: { id: string } }) {
+    const { id } = params;
     const idAnalisis = id as Id<"analisis">;
     const router = useRouter();
     const analisi = useQuery(api.analisis.obtenerAnalisisPorId, { id: idAnalisis });
-    const [fields, setFields] = useState([""]);
     const actualizarAnalisis = useMutation(api.analisis.actualizarAnalisis)
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
         diasDeEspera: "",
         costo: "",
-        datos: [],
     });
+
+    const [datosFields, setDatosFields] = useState<Dato[]>([{ nombre: "", medicion: "", estandar: "" }]);
     
     useEffect(() => {
         if (analisi) {
-        setFormData({
-            nombre: analisi.nombre,
-            descripcion: analisi.descripcion,
-            diasDeEspera: analisi.diasDeEspera,
-            costo: analisi.costo,
-            datos: analisi.datos,
-        });
+            setFormData({
+                nombre: analisi.nombre,
+                descripcion: analisi.descripcion,
+                diasDeEspera: analisi.diasDeEspera.toString(),
+                costo: analisi.costo.toString(),
+            });
 
-        if (analisi.datos && analisi.datos.length > 0) {
-            setFields(analisi.datos);
-        }
-
+            if (analisi.datos && analisi.datos.length > 0) {
+                setDatosFields(analisi.datos);
+            } else {
+                 setDatosFields([{ nombre: "", medicion: "", estandar: "" }]);
+            }
         }
     }, [analisi]);
 
-    // Agregar un nuevo campo
-    const addField = () => {
-        setFields([...fields, ""]);
+    const addDatoField = () => {
+        setDatosFields([...datosFields, { nombre: "", medicion: "", estandar: "" }]);
     };
 
-    // Eliminar un campo
-    const removeLastField = () => {
-        if (fields.length > 1) {
-        setFields(fields.slice(0, -1)); // elimina el último elemento
+    const removeLastDatoField = () => {
+        if (datosFields.length > 1) {
+            setDatosFields(datosFields.slice(0, -1));
         }
     };
 
-    // Actualizar el valor de un campo
-    const handleChangeArray = (index: number, value: string) => {
-        const newFields = [...fields];
-        newFields[index] = value;
-        setFields(newFields);
+    const handleDatoChange = (index: number, name: keyof Dato, value: string) => {
+        const newDatosFields = [...datosFields];
+        newDatosFields[index][name] = value;
+        setDatosFields(newDatosFields);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,41 +85,40 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMessage("");
         setIsSubmitting(true);
 
-        // Filtrar campos vacíos del array de datos
-        const datosFiltrados = fields.filter(field => field.trim() !== "");
-
-        // Validar que los campos numéricos no estén vacíos
-        if (!formData.diasDeEspera || !formData.costo) {
-            alert("Por favor completa todos los campos numéricos");
+        if (!formData.diasDeEspera || !formData.costo || !formData.nombre || !formData.descripcion) {
+            setErrorMessage("Por favor, completa todos los campos del análisis.");
             setIsSubmitting(false);
             return;
         }
 
-        // Validar que al menos un parámetro esté presente
-        if (datosFiltrados.length === 0) {
-            alert("Por favor agrega al menos un parámetro al análisis");
+        const hasEmptyDatos = datosFields.some(dato => 
+            !dato.nombre.trim() || !dato.medicion.trim() || !dato.estandar.trim()
+        );
+
+        if (hasEmptyDatos || datosFields.length === 0) {
+            setErrorMessage("Por favor, completa todos los campos de cada parámetro.");
             setIsSubmitting(false);
             return;
         }
 
         const newFormData = {
+            id: idAnalisis,
             nombre: formData.nombre,
             descripcion: formData.descripcion,
             diasDeEspera: parseInt(formData.diasDeEspera),
             costo: parseFloat(formData.costo),
-            datos: datosFiltrados
+            datos: datosFields
         }
 
         try {
-            await actualizarAnalisis({
-                id: analisi._id,
-                ...newFormData,
-            });
-        router.push(`/analysis`);
+            await actualizarAnalisis(newFormData);
+            router.push(`/analysis`);
         } catch (error) {
-        console.error("Error al actualizar analisi:", error);
+            console.error("Error al actualizar analisis:", error);
+            setErrorMessage("Error al actualizar el análisis. Por favor, intenta de nuevo.");
         } finally {
             setIsSubmitting(false);
         }
@@ -154,9 +158,9 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                     <Button variant="outline" size="icon" onClick={() => router.back()}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
-                    <h1 className="text-3xl font-bold">Analisi no encontrado</h1>
+                    <h1 className="text-3xl font-bold">Análisis no encontrado</h1>
                 </div>
-                <p>No se pudo encontrar el analisi con el ID proporcionado.</p>
+                <p>No se pudo encontrar el análisis con el ID proporcionado.</p>
             </div>
         );
     }
@@ -169,7 +173,7 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <h1 className="text-2xl sm:text-3xl font-bold">
-                        Actualizar Analisis
+                        Actualizar Análisis
                     </h1>
                 </div>
             </div>
@@ -177,30 +181,30 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
             <Card className="w-full max-w-2xl mx-auto">
                 <form onSubmit={handleSubmit}>
                     <CardHeader>
-                        <CardTitle className="font-semibold text-center">Información del Analisis</CardTitle>
+                        <CardTitle className="font-semibold text-center">Información del Análisis</CardTitle>
                     </CardHeader>
 
                     <CardContent className="grid grid-cols-1 gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="Nombre">Nombre del analisis</Label>
+                            <Label htmlFor="nombre">Nombre del análisis</Label>
                             <Input
                                 id="nombre"
                                 name="nombre"
                                 value={formData.nombre}
                                 onChange={handleChange}
-                                placeholder="Ej: Quimica sanguinea"
+                                placeholder="Ej: Química sanguínea"
                                 required
                             />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="nombre">Descripción del analisis</Label>
+                            <Label htmlFor="descripcion">Descripción del análisis</Label>
                             <Input
                                 id="descripcion"
                                 name="descripcion"
                                 value={formData.descripcion}
                                 onChange={handleChange}
-                                placeholder="Descripción del analisis"
+                                placeholder="Descripción del análisis"
                                 required
                             />
                         </div>
@@ -242,7 +246,7 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                             <div className="flex flex-col sm:flex-row justify-between gap-4 mt-4">
                                 <Button
                                     type="button"
-                                    onClick={addField}
+                                    onClick={addDatoField}
                                     variant="outline" 
                                     size="sm"
                                     >
@@ -251,29 +255,51 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                                 </Button>
                                 <Button
                                     type="button"
-                                    onClick={removeLastField}
+                                    onClick={removeLastDatoField}
                                     variant="outline" 
                                     size="sm"
-                                    disabled={fields.length <= 1}
+                                    disabled={datosFields.length <= 1}
                                     >
                                     <IconMinus className="h-4 w-4" />
                                     Eliminar último
                                 </Button>
                             </div>
-                            <div className="space-y-2 mt-4">
-                                {fields.map((value, index) => (
-                                    <Input
-                                    key={`field-${index}`}
-                                    type="text"
-                                    value={value}
-                                    onChange={(e) => handleChangeArray(index, e.target.value)}
-                                    placeholder={`Parámetro ${index + 1} (ej: Glucosa, Colesterol, etc.)`}
-                                    className="w-full"
-                                    />
+                            <div className="space-y-4 mt-4">
+                                {datosFields.map((dato, index) => (
+                                    <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <Input
+                                            type="text"
+                                            value={dato.nombre}
+                                            onChange={(e) => handleDatoChange(index, "nombre", e.target.value)}
+                                            placeholder={`Nombre (ej: Glucosa)`}
+                                            className="w-full"
+                                            required
+                                        />
+                                        <Input
+                                            type="text"
+                                            value={dato.medicion}
+                                            onChange={(e) => handleDatoChange(index, "medicion", e.target.value)}
+                                            placeholder={`Medición (ej: g)`}
+                                            className="w-full"
+                                            required
+                                        />
+                                        <Input
+                                            type="text"
+                                            value={dato.estandar}
+                                            onChange={(e) => handleDatoChange(index, "estandar", e.target.value)}
+                                            placeholder={`Estándar (ej: 50-60)`}
+                                            className="w-full"
+                                            required
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </div>
-
+                        {errorMessage && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errorMessage}</AlertDescription>
+                            </Alert>
+                        )}
                     </CardContent>
 
                     <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 mt-4">
@@ -297,6 +323,5 @@ export default function DetalleEstudiantePage({ params }: { params: Promise<{ id
                 </form>
             </Card>
         </div>
-
     );
 }
