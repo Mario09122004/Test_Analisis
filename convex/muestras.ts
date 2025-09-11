@@ -128,34 +128,56 @@ export const actualizarMuestra = mutation({
     }
 });
 
-// Consultar las muestras en base al usuario (pagada y finalizado)
-export const obtenerMuestrasDeUsuarioFiltradas = query({
-  args: {
-    userId: v.id("user"),
-  },
+export const getCompletedSamplesByClerkId = query({
+  args: { clerkId: v.string() },
   handler: async (ctx, args) => {
+    // 1. Encontrar al usuario usando el idClerk, que es único.
+    const user = await ctx.db
+      .query("user")
+      .withIndex("by_clerk_id", (q) => q.eq("idClerk", args.clerkId))
+      .unique();
+
+    // Si el usuario no existe, no se devuelve nada.
+    if (!user) {
+      return { user: null, samples: [] };
+    }
+
+    // 2. Encontrar todas las órdenes pagadas de este usuario.
     const paidOrders = await ctx.db
       .query("orders")
-      .withIndex("by_UserId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_UserId", (q) => q.eq("userId", user._id))
       .filter((q) => q.eq(q.field("statusPago"), "pagado"))
       .collect();
 
+    // Si no hay órdenes pagadas, no habrá resultados que mostrar.
     if (paidOrders.length === 0) {
-      return [];
+      return { user, samples: [] };
     }
 
-    let finalizadas = [];
+    // 3. Por cada orden pagada, obtener sus muestras finalizadas.
+    let completedSamples = [];
     for (const order of paidOrders) {
       const samples = await ctx.db
         .query("samples")
         .withIndex("by_Order", (q) => q.eq("orderId", order._id))
         .filter((q) => q.eq(q.field("estado"), "finalizada"))
         .collect();
-      
-      finalizadas.push(...samples);
+
+      // 4. Enriquecer cada muestra con el nombre del análisis.
+      const enrichedSamples = await Promise.all(
+        samples.map(async (sample) => {
+          const analysis = await ctx.db.get(sample.analisisId);
+          return {
+            ...sample,
+            analysisName: analysis?.nombre ?? "Análisis Desconocido",
+          };
+        })
+      );
+      completedSamples.push(...enrichedSamples);
     }
-    
-    return finalizadas;
+
+    // 5. Devolver la información del usuario y su lista de muestras completadas.
+    return { user, samples: completedSamples };
   },
 });
 
