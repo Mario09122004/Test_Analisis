@@ -152,3 +152,20 @@ export const eliminarOrden = mutation({
         return await ctx.db.delete(args.id);
     },
 });
+
+export const obtenerOrdenesConCliente = query({
+    handler: async (ctx) => {
+        const orders = await ctx.db.query("orders").order("desc").collect();
+
+        // Enriquecer cada orden con el nombre del cliente
+        return Promise.all(
+            orders.map(async (order) => {
+                const user = await ctx.db.get(order.userId);
+                return {
+                    ...order,
+                    patientName: user?.nombre ?? "Cliente Desconocido",
+                };
+            })
+        );
+    },
+});

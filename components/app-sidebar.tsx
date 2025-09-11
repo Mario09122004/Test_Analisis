@@ -8,6 +8,7 @@ import {
   IconUserFilled,
   IconFileBarcode,
   IconReport,
+  IconUsers,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -37,24 +38,29 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Users",
+      title: "Usuarios",
       url: "/users",
-      icon: IconUserFilled,
+      icon: IconUsers,
     },
     {
-      title: "Orders",
+      title: "Ordenes",
       url: "/orders",
       icon: IconFileBarcode,
     },
     {
-      title: "Samples",
+      title: "Muestras",
       url: "/samples",
       icon: IconTestPipe2Filled,
     },
     {
-      title: "Analysis",
+      title: "Analisis",
       url: "/analysis",
       icon: IconReport,
+    },
+    {
+      title: "Mis resultados",
+      url: "/miresults",
+      icon: IconUserFilled,
     },
   ],
 }

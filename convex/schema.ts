@@ -62,7 +62,7 @@ export default defineSchema({
     })
     .index("by_UserId", ["userId"]),
 
-    samples: defineTable({ // Poner un boton en las ordenes en la cual se uestre una pestaña con las muestras de la orden
+    samples: defineTable({
         orderId: v.id("orders"),
         analisisId: v.id("analisis"),
         estado: v.union(
@@ -71,9 +71,13 @@ export default defineSchema({
             v.literal("finalizada")
         ),
         resultados: v.optional(
-            v.record(
-                v.string(),
-                v.union(v.string(), v.number(), v.boolean(), v.null())
+            v.array(
+                v.object({
+                    nombre: v.string(),
+                    medicion: v.string(),
+                    estandar: v.string(),
+                    valor: v.union(v.string(), v.number(), v.boolean(), v.null()),
+                })
             )
         ),
         createdAt: v.number(),
