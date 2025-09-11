@@ -28,9 +28,14 @@ http.route({
           await ctx.runMutation(internal.users.upsertFromClerk, {
             data: event.data,
           });
+
+          //Test de envio por resend
+          //await ctx.runMutation(internal.sendEmails.sendTestEmail, {})
+          
           console.log(
             `Successfully processed ${event.type} for user: ${event.data.id}`
           );
+
           break;
         case 'user.deleted': {
           const clerkUserId = event.data.id!;
