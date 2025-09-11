@@ -31,18 +31,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavUser(){
+export function NavUser({
+  user,
+}: {
+  user: {
+    name: string
+    email: string
+    avatar: string
+  }
+}) {
+  const { isMobile } = useSidebar()
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
+          <DropdownMenuTrigger asChild>
+            
               <UserButton />
-            </SidebarMenuButton>
           </DropdownMenuTrigger>
         </DropdownMenu>
       </SidebarMenuItem>
